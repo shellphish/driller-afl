@@ -224,6 +224,7 @@ void afl_forkserver(CPUArchState *env) {
 static inline void afl_maybe_log(abi_ulong cur_loc) {
 
   static abi_ulong prev_loc;
+  abi_ulong cur_val, overflow_loc;
 
   /* Optimize for cur_loc > afl_end_code, which is the most likely case on
      Linux systems. */
@@ -245,7 +246,23 @@ static inline void afl_maybe_log(abi_ulong cur_loc) {
 
   if (cur_loc >= afl_inst_rms) return;
 
+  cur_val = afl_area_ptr[cur_loc ^ prev_loc];
+
+  /* Check to see if the byte is overflowing, this should hopefully get us
+     another byte for branch hit counters. */
+  if (cur_val == 255)
+  {
+    /* Yan thinks this is an acceptable hash so I do too. */
+    overflow_loc  = (cur_loc ^ prev_loc) + 1;
+    overflow_loc &= MAP_SIZE - 1;
+
+    /* Increment our overflow counter. */
+    afl_area_ptr[overflow_loc]++;
+  }
+
+  /* Now increment the original transition. */
   afl_area_ptr[cur_loc ^ prev_loc]++;
+
   prev_loc = cur_loc >> 1;
 
 }
