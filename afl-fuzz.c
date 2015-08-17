@@ -77,8 +77,7 @@ static u8 *in_dir,                    /* Input directory with test cases  */
           *target_path,               /* Path to target binary            */
           *target_binary_path,        /* Path to target binary, not qemu  */
           *orig_cmdline,              /* Original command line            */
-          file_type,                  /* ELF or CGC binary?               */
-          do_eof_exit;                /* Do we need to exit on EOF?       */
+          file_type;                  /* ELF or CGC binary?               */
 
 static u32 exec_tmout = EXEC_TIMEOUT; /* Configurable exec timeout (ms)   */
 static u64 mem_limit = MEM_LIMIT;     /* Memory cap for child (MB)        */
@@ -6689,7 +6688,6 @@ static void usage(u8* argv0) {
        "Driller options:\n\n"
 
        "  -D file       - path to the drill script\n"
-       "  -E            - tell QEMU to exit on EOF for binaries which don't handle it themselves\n\n"
 
        "Other stuff:\n\n"
 
@@ -7206,14 +7204,8 @@ static char** get_qemu_argv(u8* own_loc, char** argv, int argc) {
 
   memcpy(new_argv + 3, argv + 1, sizeof(char*) * argc);
 
-  if (!do_eof_exit) {
-      new_argv[2] = target_path;
-      new_argv[1] = "--";
-  } else { 
-      new_argv[3] = target_path;
-      new_argv[2] = "--";
-      new_argv[1] = "-eof-exit";
-  }
+  new_argv[2] = target_path;
+  new_argv[1] = "--";
 
   /* Now we need to actually find the QEMU binary to put in argv[0]. */
 
@@ -7326,13 +7318,7 @@ void invoke_driller(char **use_argv)
     argv[4]  = alloc_printf("%s/queue", out_dir);
     argv[5]  = "-f";
     argv[6] = alloc_printf("%s/fuzz_bitmap", out_dir); 
-    
-    if (do_eof_exit) {
-        argv[7] = "-E";
-        argv[8] = NULL;
-    }
-    else
-        argv[7] = NULL;
+    argv[7] = NULL;
 
 
     driller_pid = fork();
@@ -7392,11 +7378,6 @@ int main(int argc, char** argv) {
 
         if (driller_path) FATAL("Multiple -D options not supported");
         driller_path = optarg;
-        break;
-
-      case 'E': /* EOF exit */
-        
-        do_eof_exit = 1;
         break;
 
       case 'M':
