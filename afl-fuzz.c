@@ -59,9 +59,6 @@
 #  include <sys/sysctl.h>
 #endif /* __APPLE__ || __FreeBSD__ || __OpenBSD__ */
 
-#define ELF_EXEC 0
-#define CGC_EXEC 1
-
 /* Lots of globals, but mostly for the status UI and other things where it
    really makes no sense to haul them around as function parameters. */
 
@@ -76,8 +73,7 @@ static u8 *in_dir,                    /* Input directory with test cases  */
           *doc_path,                  /* Path to documentation dir        */
           *target_path,               /* Path to target binary            */
           *target_binary_path,        /* Path to target binary, not qemu  */
-          *orig_cmdline,              /* Original command line            */
-          file_type;                  /* ELF or CGC binary?               */
+          *orig_cmdline;              /* Original command line            */
 
 static u32 exec_tmout = EXEC_TIMEOUT; /* Configurable exec timeout (ms)   */
 static u64 mem_limit = MEM_LIMIT;     /* Memory cap for child (MB)        */
@@ -6542,10 +6538,8 @@ static void check_binary(u8* fname) {
 
 #ifndef __APPLE__
 
-  file_type = ELF_EXEC;
   if (f_data[0] != 0x7f || memcmp(f_data + 1, "ELF", 3))
   {
-    file_type = CGC_EXEC;
     if (f_data[0] != 0x7f || memcmp(f_data + 1, "CGC", 3))
         FATAL("Program '%s' is not an ELF or CGC binary", target_path);
   }
@@ -7211,13 +7205,7 @@ static char** get_qemu_argv(u8* own_loc, char** argv, int argc) {
 
   tmp = getenv("AFL_PATH");
 
-  if (file_type == ELF_EXEC)
-    qemu_name = "afl-qemu-trace";
-  else if (file_type == CGC_EXEC)
-    qemu_name = "afl-qemu-trace-cgc";
-  else
-    FATAL("Somehow got an unknown file type, not ELF or CGC binary.");
-    
+  qemu_name = "afl-qemu-trace";
 
   if (tmp) {
 
