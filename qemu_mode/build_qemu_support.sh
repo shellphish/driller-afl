@@ -22,9 +22,6 @@
 # will be written to ../afl-qemu-trace.
 #
 
-QEMU_URL="http://wiki.qemu-project.org/download/qemu-2.3.0.tar.bz2"
-QEMU_SHA384="7a0f0c900f7e2048463cc32ff3e904965ab466c8428847400a0f2dcfe458108a68012c4fddb2a7e7c822b4fd1a49639b"
-
 echo "================================================="
 echo "AFL binary-only instrumentation QEMU build script"
 echo "================================================="
@@ -82,73 +79,6 @@ if echo "$CC" | grep -qF /afl-; then
 fi
 
 echo "[+] All checks passed!"
-
-ARCHIVE="`basename -- "$QEMU_URL"`"
-
-CKSUM=`sha384sum -- "$ARCHIVE" 2>/dev/null | cut -d' ' -f1`
-
-if [ ! "$CKSUM" = "$QEMU_SHA384" ]; then
-
-  echo "[*] Downloading QEMU 2.3.0 from the web..."
-  rm -f "$ARCHIVE"
-  wget -O "$ARCHIVE" -- "$QEMU_URL" || exit 1
-
-  CKSUM=`sha384sum -- "$ARCHIVE" 2>/dev/null | cut -d' ' -f1`
-
-fi
-
-if [ "$CKSUM" = "$QEMU_SHA384" ]; then
-
-  echo "[+] Cryptographic signature on $ARCHIVE checks out."
-
-else
-
-  echo "[-] Error: signature mismatch on $ARCHIVE (perhaps download error?)."
-  exit 1
-
-fi
-
-echo "[*] Uncompressing archive (this will take a while)..."
-
-rm -rf "qemu-2.3.0" || exit 1
-tar xf "$ARCHIVE" || exit 1
-
-echo "[+] Unpacking successful."
-
-echo "[*] Applying patches..."
-
-patch -p0 <patches/elfload.diff || exit 1
-patch -p0 <patches/cpu-exec.diff || exit 1
-patch -p0 <patches/translate-all.diff || exit 1
-patch -p0 <patches/syscall.diff || exit 1
-
-echo "[+] Patching done."
-
-test "$CPU_TARGET" = "" && CPU_TARGET="`uname -m`"
-test "$CPU_TARGET" = "i686" && CPU_TARGET="i386"
-
-echo "[*] Configuring QEMU for $CPU_TARGET..."
-
-cd qemu-2.3.0 || exit 1
-
-CFLAGS="-O3" ./configure --disable-system --enable-linux-user \
-  --enable-guest-base --disable-gtk --disable-sdl --disable-vnc \
-  --target-list="${CPU_TARGET}-linux-user" || exit 1
-
-echo "[+] Configuration complete."
-
-echo "[*] Attempting to build QEMU (fingers crossed!)..."
-
-make -j || exit 1
-
-echo "[+] Build process successful!"
-
-echo "[*] Copying binary..."
-
-cp -f "${CPU_TARGET}-linux-user/qemu-${CPU_TARGET}" "../../afl-qemu-trace" || exit 1
-
-cd ..
-ls -l ../afl-qemu-trace || exit 1
 
 #echo "[+] Successfully created '../afl-qemu-trace'."
 #
@@ -210,13 +140,14 @@ echo "[+] Build process successful!"
 
 echo "[*] Copying binary..."
 
-cp -f "i386-linux-user/qemu-i386" "../../afl-qemu-trace-cgc" || exit 1
+mkdir -p ../../tracers/i386
+cp -f "i386-linux-user/qemu-i386" "../../tracers/i386/afl-qemu-trace" || exit 1
 
 cd ..
-ls -l ../afl-qemu-trace-cgc || exit 1
+ls -l ../../tracers/i386/afl-qemu-trace || exit 1
 
-echo "[+] Successfully created '../afl-qemu-trace-cgc'."
+echo "[+] Successfully created '../../tracers/i386/afl-qemu-trace'."
 
-echo "[+] All set, you can now use the -Q mode in afl-fuzz on CGC binaries as well!"
+echo "[+] All set, you can now use the -Q mode in afl-fuzz on CGC binaries!"
 
 exit 0
