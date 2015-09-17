@@ -144,7 +144,7 @@ mkdir -p ../../tracers/i386
 cp -f "i386-linux-user/qemu-i386" "../../tracers/i386/afl-qemu-trace" || exit 1
 
 cd ..
-ls -l ../../tracers/i386/afl-qemu-trace || exit 1
+ls -l ../tracers/i386/afl-qemu-trace || exit 1
 
 echo "[+] Successfully created '../../tracers/i386/afl-qemu-trace'."
 
