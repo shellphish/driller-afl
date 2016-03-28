@@ -2271,7 +2271,8 @@ static u8 run_target(char** argv) {
 
   if (WIFSIGNALED(status) && !stop_soon) {
     kill_signal = WTERMSIG(status);
-    if ((kill_signal == SIGSEGV) || (kill_signal == SIGILL))
+    /* SIGUSR1 signifies the detection of a leak */
+    if ((kill_signal == SIGSEGV) || (kill_signal == SIGILL) || (kill_signal == SIGUSR1))
         return FAULT_CRASH;
   }
 
