@@ -116,7 +116,7 @@ echo "[+] Building CGC qemu!"
 QEMU_DIR=qemu-cgc-afl
 rm -rf $QEMU_DIR
 echo "[*] Cloning our QEMU repository..."
-git clone --branch base_cgc git@git.seclab.cs.ucsb.edu:cgc/qemu.git $QEMU_DIR || exit 1
+git clone --branch base_cgc git@github.com:mechaphish/qemu-cgc.git $QEMU_DIR || exit 1
 echo "[*] Checking out our current afl pre-patched QEMU version..."
 git -C $QEMU_DIR pull || exit 1
 echo "[+] Checked out."
